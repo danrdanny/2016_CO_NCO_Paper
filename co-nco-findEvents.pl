@@ -16,7 +16,7 @@ my $chromSizes		= "dm6.chrom.sizes";
 my $parentA	= "w1118-parent";
 my $parentB	= "CantonS-parent";
 
-my @chrList = qw/ chrX chr2L chr2R chr3L chr3R chr4 /;
+my @chrList = qw/ chrX chr2L chr2R chr3L chr3R /; # add chr4 if you'd like to look at that
 
 ## Command-line options
 my %opts;
@@ -35,10 +35,10 @@ if ($opts{'h'}) {
 
 	Optional:
 
-		-e If out_uniqueParentalVariants.tsv already exists you can use it 
+		-e If co-nco-uniqueParentalVariants.tsv already exists you can use it 
 		   and not re-make it every time.
 
-		-l Populate or add to the cogcPositionsToSkip.tsv file.
+		-l Populate or add to the co-nco-PositionsToSkip.tsv file.
 
 		-s Specific stock you want to check.
 
@@ -49,7 +49,7 @@ if ($opts{'h'}) {
         exit 0;
 }
 
-## Subroutine to check memory usage - Doesn't work on every system
+## Subroutine to check memory usage - Doesn't work on every OS, notably OSX 
 sub memUsage {
         my $gb;
         if (-e "/proc/$$/status") {
@@ -102,7 +102,7 @@ while (<INF>) {
 }
 close INF;
 
-if (!$opts{'e'}) {  # -e flag is to use existing out_uniqueParentalVariants.tsv file
+if (!$opts{'e'}) {  # -e flag is to use existing co-nco-uniqueParentalVariants.tsv file
 	## Open repeatmasker file
 	my %repeats;
 	print "[".localtime(time)."] Getting repeats from $repeatMasker.\n";
@@ -257,7 +257,7 @@ if (!$opts{'e'}) {  # -e flag is to use existing out_uniqueParentalVariants.tsv 
 	undef %parentalSNPs;
 	undef %cns;
 
-	open OUTF,">$pwd/out_uniqueParentalVariants.tsv";
+	open OUTF,">$pwd/co-nco-uniqueParentalVariants.tsv";
 	print OUTF $output;
 	close OUTF;
 
@@ -278,20 +278,20 @@ if (!$opts{'e'}) {  # -e flag is to use existing out_uniqueParentalVariants.tsv 
 	}
 	printf "[".localtime(time)."] %30s %8d\n", "Total Count", $totalCount;
 	print "[".localtime(time)."] \n";
-	print "[".localtime(time)."] Unique variants saved in out_uniqueParentalVariants.tsv\n";
+	print "[".localtime(time)."] Unique variants saved in co-nco-uniqueParentalVariants.tsv\n";
 	print "[".localtime(time)."] Memory usage: ".memUsage()."\n";
 	print "[".localtime(time)."] \n";
 } else {
-	die "Error: out_uniqueParentalVariants.csv doesn't exist! Quitting.\n" if !-e "$pwd/out_uniqueParentalVariants.tsv";
-	print "[".localtime(time)."] -e flag passed, out_uniqueParentalVariants.tsv exists.\n";
+	die "Error: co-nco-uniqueParentalVariants.csv doesn't exist! Quitting.\n" if !-e "$pwd/co-nco-uniqueParentalVariants.tsv";
+	print "[".localtime(time)."] -e flag passed, co-nco-uniqueParentalVariants.tsv exists.\n";
 }
 
 #exit 0;
 
-# open out_uniqueParentalVariants.csv
+# open co-nco-uniqueParentalVariants.csv
 my(%parental,%SNP,$countVariants,%countSNPs);
-print "[".localtime(time)."] Opening out_uniqueParentalVariants.tsv.\n";
-open INF,"$pwd/out_uniqueParentalVariants.tsv" or die "Can't open out_uniqueParentalVariants.tsv: $!";
+print "[".localtime(time)."] Opening co-nco-uniqueParentalVariants.tsv.\n";
+open INF,"$pwd/co-nco-uniqueParentalVariants.tsv" or die "Can't open co-nco-uniqueParentalVariants.tsv: $!";
 while (<INF>) {
 	my(@F) = split /\t/, $_;
 	next unless $F[1] =~ /[0-9]/;
@@ -322,7 +322,7 @@ print "[".localtime(time)."] \n";
 
 
 ######
-open INF,"./cogcPositionsToSkip.tsv";
+open INF,"./co-nco-PositionsToSkip.tsv";
 while (<INF>) {
 	my(@F) = split /\t/, $_;
 	my($chr,$count) = ($F[0],$F[2]);

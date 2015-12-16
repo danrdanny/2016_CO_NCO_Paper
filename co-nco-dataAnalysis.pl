@@ -46,7 +46,7 @@ $chrSizes{'chr3R'} = 32078544;
 
 my %allStocks;
 my $count = 1;
-open INF,"./sampleSheet.tsv" or die "Can't open file sampleSheet.tsv: $!";
+open INF,"./co-nco-sampleSheet.tsv" or die "Can't open file co-nco-sampleSheet.tsv: $!";
 while (<INF>) {
 	chomp($_);
 	my(@F) = split /\t/, $_;
@@ -66,8 +66,8 @@ print "[".localtime(time)."] Total stocks identified: $count\n\n";
 
 if ($opts{'a'} == 1) { 
 	my($countVariants,%countSNPs);
-	print "[".localtime(time)."] Genome-wide and per-chromosome SNP counts are from out_uniqueParentalVariants.tsv.\n";
-	open INF,"./out_uniqueParentalVariants.tsv" or die "Can't open out_uniqueParentalVariants.tsv: $!";
+	print "[".localtime(time)."] Genome-wide and per-chromosome SNP counts are from co-nco-uniqueParentalVariants.tsv.\n";
+	open INF,"./co-nco-uniqueParentalVariants.tsv" or die "Can't open co-nco-uniqueParentalVariants.tsv: $!";
 	while (<INF>) {
         	my(@F) = split /\t/, $_;
         	next unless $F[1] =~ /[0-9]/;

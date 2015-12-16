@@ -5,7 +5,7 @@
 # This pipeline takes fastq data for the CO/NCO paper and aligns/analyzes it.
 #
 # Please use -h to see a full description. 
-# Stocks to align/analyze are listed in sampleSheet.tsv. 
+# Stocks to align/analyze are listed in co-nco-sampleSheet.tsv. 
 # Lines beginning with '#' are ignored.
 #
 # Written by Danny Miller danrdanny (shift-2) gmail (dot) com
@@ -61,7 +61,7 @@ my $chromSizes		= "dm6.chrom.sizes";
 my $ucscChromSizes 	= "http://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips/dm6.chrom.sizes";
 my $genomeFile		= "genome.dm6.txt"; # from github
 #my $md5File		= "md5values.individualFiles.dat"; # from github
-my $sampleSheet		= "sampleSheet.tsv"; # from github
+my $sampleSheet		= "co-nco-sampleSheet.tsv"; # from github
 
 ## Logfile name
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -94,14 +94,14 @@ if ($opts{'h'} || !$opts{'t'}) {
 	  - Check for the presence of required files: dm6.fa, dm6.chrom.sizes, rmsk.txt, and
 	    genome.dm3.txt. Any file absent will be downloaded automatically.
 
-	  - Check for the presence of sampleSheet.tsv. Any line that begins with a # in this
+	  - Check for the presence of co-nco-sampleSheet.tsv. Any line that begins with a # in this
 	    file will be ignored. Format of this file is as follows:
 	    <Sample_Name>\\t<Barcode>\\t<LIMS_Order>\\t<Lanes>\\t<Class>
 
 	  - Check for the presence of raw data files. The script will only download files 
-	    needed to complete the alignment of stocks listed in sampleSheet.tsv.
+	    needed to complete the alignment of stocks listed in co-nco-sampleSheet.tsv.
 
-	  - Perform alignment with bwa on each stock in sampleSheet.tsv not prefixed with '#'.
+	  - Perform alignment with bwa on each stock in co-nco-sampleSheet.tsv not prefixed with '#'.
 	    If .bam file exists in the <Sample_Name> directory this step is skipped.
 	    - After merging/sorting read groups are replaced with picard 
 	      AddOrReplaceReadGroups.jar
@@ -134,7 +134,7 @@ if ($opts{'h'} || !$opts{'t'}) {
 	-a  Make common alignmentStatistics.tsv file.
             Specifically, this will collect data from each <Sample_Name>/alignmentStatistics.tsv 
 	    file and pool it into an out_alignmentStatistics.tsv file at the root directory. It 
-	    will operate over stocks listed in sampleSheet.tsv.
+	    will operate over stocks listed in co-nco-sampleSheet.tsv.
 
 	-h  This helpful help.
 	\n";
@@ -202,7 +202,7 @@ logData("Identified chrom.sizes file $chromSizes",'print');
 die "Could not locate $genomeFile file" if !-e "$refLoc/$genomeFile";
 logData("Identified file $genomeFile",'print');
 
-# 4. sampleSheet.tsv
+# 4. co-nco-sampleSheet.tsv
 die "Could not locate $sampleSheet file" if !-e $sampleSheet;
 logData("Identified $sampleSheet file",'print');
 
@@ -246,7 +246,7 @@ close INF;
 #}
 #close INF;
 
-## Open sampleSheet.tsv to get information about stocks/barcodes
+## Open co-nco-sampleSheet.tsv to get information about stocks/barcodes
 my %stocksToAlign;
 #my %limsOrdersNeeded;
 my $numStocksToAlign;
