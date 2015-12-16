@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# This script generates 
+#
+# Danny Miller
+
 use strict;
 use Getopt::Std;
 
@@ -19,13 +23,12 @@ if ($opts{'h'} || !$opts{'a'}) {
 
 	-a  Analysis you want to run (no default). Options are:
 
-	     1 - Per chromosome SNP count
-	     2 - Count all events
-	     3 - CO events in proximal half vs distal half
-	     4 - NCO events in proximal third vs distal two thirds
+	     1 - Genome-wide and per-chromosome SNP count
+	     2 - Count of SCOs, DCOs, TCOs, NCOs, and non-crossover chromatds
+	     3 - CO events in proximal half vs distal half of each chromatid
+	     4 - NCO events in proximal third vs distal two thirds of each chromatid
 	     5 - Chromatids with more than one NCO
 	     6 - Chromatid with CO and NCO
-	     7 - DCO Distribution
 
 	Optional flags: 
 
@@ -54,13 +57,16 @@ while (<INF>) {
 }
 close INF;
 $count--;
-print "[".localtime(time)."] Total stocks identified: $count\n";
+print "[".localtime(time)."] Option passed: $opts{'a'}\n";
+print "[".localtime(time)."] Total stocks identified: $count\n\n";
 
+  #--------------------------------------------------#
+  #  Option 1 - Total and per-chromosome snp counts  #
+  #--------------------------------------------------#
 
-## Option 1 - Total and per-chromosome snp counts
 if ($opts{'a'} == 1) { 
 	my($countVariants,%countSNPs);
-	print "[".localtime(time)."] Opening out_uniqueParentalVariants.tsv to return total and per-chromosome SNP counts.\n";
+	print "[".localtime(time)."] Genome-wide and per-chromosome SNP counts are from out_uniqueParentalVariants.tsv.\n";
 	open INF,"./out_uniqueParentalVariants.tsv" or die "Can't open out_uniqueParentalVariants.tsv: $!";
 	while (<INF>) {
         	my(@F) = split /\t/, $_;
@@ -77,15 +83,19 @@ if ($opts{'a'} == 1) {
         	++$countVariants;
         	$countSNPs{$chr}++;
 	}
-	print "[".localtime(time)."] $countVariants total variants identified.\n";
-	printf "[".localtime(time)."] \n";
-	printf "[".localtime(time)."] %39s\n", "Per chromosome counts";
+	print "[".localtime(time)."] Total SNPs identified: $countVariants\n";
+	print "[".localtime(time)."] \n";
+	printf "[".localtime(time)."] Per chromosome SNP counts:\n";
 	foreach my $chr (sort keys %chrSizes) {
         	my $snpPerBP = sprintf("%0.0f", $chrSizes{$chr} / $countSNPs{$chr});
-        	printf "[".localtime(time)."] %17s %10d - 1 snp / %4d bp\n", $chr, $countSNPs{$chr}, $snpPerBP;
+        	printf "[".localtime(time)."] %6s %8d\t1 snp / %-4d bp\n", $chr, $countSNPs{$chr}, $snpPerBP;
 	}
 
-} elsif ($opts{'a'} == 2) {  #Count all events
+  #--------------------------------------------#
+  # Option 2 - Count NCO, SCO, DCO, etc events #
+  #--------------------------------------------#
+
+} elsif ($opts{'a'} == 2) {
 	my %nonCOChromatids;
 	foreach my $stock (keys %allStocks) {
 		foreach my $chr (keys %chrSizes) {
@@ -120,6 +130,8 @@ if ($opts{'a'} == 1) {
 	}
 
 	print "\n";
+	print "Count of CO events.\n";
+	print "\n";
 	print "Non-CO chromatids: $nonCOCount\n";
 	print "\n";
 	print "SCO: $scoCount\n";
@@ -128,9 +140,13 @@ if ($opts{'a'} == 1) {
 	print "Total COs: $totalCount\n";
 	print "SCOs + DCO events + TCO events + non-CO chromatids should equal 980\n";
 	print "\n";
-	print "NCO gene conversions: $ncoCount (counts three discontionus tracts as two event each)\n";
+	print "NCO gene conversions: $ncoCount (counts three discontionus tracts as two events each)\n";
+	print "\n";
 
-## CO events in proximal half vs distal half
+  #-----------------------------------------------------------#
+  # Option 3: Count CO events in proximal half vs distal half #
+  #-----------------------------------------------------------#
+
 } elsif ($opts{'a'} == 3) {
 	my %counts;
 	open INF,"./CO_NCO_data/co-ncoDetail.r6.tsv" or die "Can't open file co-ncoDetail.r6.tsv: $!";
@@ -155,7 +171,11 @@ if ($opts{'a'} == 1) {
 	}
 	close INF;
 
-	foreach my $chr (keys %chrSizes) {
+	print "Count of CO events in the proximal 1/2 vs distal 1/2 of each chromosome arm.\n";
+	print "\n";
+
+	print "Chr\tProximal_Events\t\tDistal_Events\n";
+	foreach my $chr (sort keys %chrSizes) {
 		my $proximal = $chr."proximal";
 		my $distal = $chr."distal";
 		my $total = $counts{$proximal} + $counts{$distal};
@@ -163,46 +183,14 @@ if ($opts{'a'} == 1) {
 		my $proxPercent = sprintf("%0.1f",($counts{$proximal} / $total) * 100);
 		my $distalPercent = sprintf("%0.1f", $counts{$distal} / $total * 100);
 
-		print "$chr proximal: $counts{$proximal} ($proxPercent\%), distal: $counts{$distal} ($distalPercent\%)\n";
+		print "$chr\t$counts{$proximal} ($proxPercent\%)\t\t$counts{$distal} ($distalPercent\%)\n";
 	}
 
-## DCO Distribution
+  #------------------------------------------------------------------------------------------#
+  # Option 4: Count NCO events in proximal third vs distal two thirds of each chromosome arm #
+  #------------------------------------------------------------------------------------------#
+
 } elsif ($opts{'a'} == 4) { 
-	my %perChrCounts;
-	my $trials = 100000;
-
-	foreach my $trial (1..$trials) {
-		my %counts;
-		foreach my $event (1..52) {
-			my $pos = int(rand(100)) + 1;
-			   
-			my $chr = 0;
-			$chr = 1 if $pos >= 0 && $pos <= 18;
-			$chr = 2 if $pos > 19 && $pos <= 35;
-			$chr = 3 if $pos > 36 && $pos <= 54;
-			$chr = 4 if $pos > 55 && $pos <= 76;
-			$chr = 5 if $pos > 77 && $pos <= 100;
-
-			$counts{$chr}++;
-		}
-
-		foreach my $chr (keys %counts) {
-			$perChrCounts{$chr}{$counts{$chr}}++;
-		}
-	}
-
-	foreach my $chr (1..5) {
-		print "Chromosome: $chr\n";
-		my $sum;
-		foreach my $key (sort {$a<=>$b} keys %{$perChrCounts{$chr}}) {
-			$sum += $perChrCounts{$chr}{$key};
-			my $percent = sprintf("%0.1f", ($sum / $trials) * 100);
-			print "- $key\t$perChrCounts{$chr}{$key}\t$sum\t$percent\n";
-		}
-	}
-
-## NCO events in proximal third vs distal two thirds
-} elsif ($opts{'a'} == 5) { 
 	my %counts;
 	open INF,"./CO_NCO_data/co-ncoDetail.r6.tsv" or die "Can't open file co-ncoDetail.r6.tsv: $!";
 	while (<INF>) {
@@ -227,6 +215,8 @@ if ($opts{'a'} == 1) {
 	close INF;
 
 	print "NCOs in proximal 1/3 vs distal 2/3 of chromosome arm:\n";
+	print "\n";
+	print "Chr\tEvents\tProximal_Events\t\tDistal_Events\n";
 	foreach my $chr (keys %chrSizes) {
 		my $proximal = $chr."proximal";
 		my $distal = $chr."distal";
@@ -235,10 +225,11 @@ if ($opts{'a'} == 1) {
 		my $proxPercent = sprintf("%0.1f",($counts{$proximal} / $total) * 100);
 		my $distalPercent = sprintf("%0.1f", $counts{$distal} / $total * 100);
 
-		print "$chr\t$total\tproximal:$counts{$proximal} ($proxPercent\%), distal: $counts{$distal} ($distalPercent\%)\n";
+		print "$chr\t$total\t$counts{$proximal} ($proxPercent\%)\t\t$counts{$distal} ($distalPercent\%)\n";
 	}
 
 	my %counts;
+	$counts{"chr2Rproximal"} = 0; #there are none, so we set it to zero to make the output pretty
 	open INF,"./CO_NCO_data/co-ncoDetail.r6.tsv" or die "Can't open file co-ncoDetail.r6.tsv: $!";
 	while (<INF>) {
 		my(@F) = split /\t/, $_;
@@ -264,6 +255,8 @@ if ($opts{'a'} == 1) {
 
 	print "\n";
 	print "SCOs in proximal 1/3 vs distal 2/3 of chromosome arm:\n";
+	print "\n";
+	print "Chr\tEvents\tProximal_Events\t\tDistal_Events\n";
 	foreach my $chr (keys %chrSizes) {
 		my $proximal = $chr."proximal";
 		my $distal = $chr."distal";
@@ -271,11 +264,14 @@ if ($opts{'a'} == 1) {
 
 		my $proxPercent = sprintf("%0.1f",($counts{$proximal} / $total) * 100);
 		my $distalPercent = sprintf("%0.1f", $counts{$distal} / $total * 100);
-		print "$chr\t$total\tproximal:$counts{$proximal} ($proxPercent\%), distal: $counts{$distal} ($distalPercent\%)\n";
+		print "$chr\t$total\t$counts{$proximal} ($proxPercent\%)\t\t$counts{$distal} ($distalPercent\%)\n";
 	}
 
-## Chromatids with more than one NCO
-} elsif ($opts{'a'} == 6) { 
+  #---------------------------------------------------#
+  # Option 5: Count chromatids with more than one NCO #
+  #---------------------------------------------------#
+
+} elsif ($opts{'a'} == 5) { 
 	my(%counts,%events);
 	open INF,"./CO_NCO_data/co-ncoDetail.r6.tsv" or die "Can't open file co-ncoDetail.r6.tsv: $!";
 	while (<INF>) {
@@ -284,8 +280,8 @@ if ($opts{'a'} == 1) {
 		next unless $F[3] eq "nco";
 		#next unless $F[3] eq "sco";
 
+		# Skip one of the two discontinous NCO events
 		next if $F[1] eq "cs12.16" && $F[2] == 12698579;
-		next if $F[1] eq "cs12.16" && $F[2] == 12698166;
 		next if $F[1] eq "w15.2" && $F[2] == 14707395;
 		next if $F[1] eq "w4.2" && $F[2] == 23358042;
 
@@ -316,20 +312,22 @@ if ($opts{'a'} == 1) {
 			$ncoCounts++;
 		}
 	}
-	print "chromatids with 2 or more NCOs: $ncoCounts.\n";
 
-	print "NCO events <4Mb from each other: $closeNCOs.\n";
+	print "Chromatids with 2 or more NCOs: $ncoCounts\n";
+	print "NCO events < 4Mb from each other: $closeNCOs\n";
 
-## Chromatid with CO and NCO
-} elsif ($opts{'a'} == 7) { 
+#---------------------------------------------------#
+# Option 6: Count chromatids with both a CO and NCO #
+#---------------------------------------------------#
+
+} elsif ($opts{'a'} == 6) { 
 	my(%counts,%events);
 	open INF,"./CO_NCO_data/co-ncoDetail.r6.tsv" or die "Can't open file co-ncoDetail.r6.tsv: $!";
 	while (<INF>) {
 		my(@F) = split /\t/, $_;
 		next unless $F[2] > 0;
-		#next unless $F[3] eq "nco";
-		#next unless $F[3] eq "sco";
 
+		# Skip one of the two discontinous NCO events
 		next if $F[1] eq "cs12.16" && $F[2] == 12698579;
 		next if $F[1] eq "w15.2" && $F[2] == 14707395;
 		next if $F[1] eq "w4.2" && $F[2] == 23358042;
@@ -378,9 +376,9 @@ if ($opts{'a'} == 1) {
 	my $aveDistBetween = sprintf("%0.0f", $runAve / $eventCount);
 
 	print "\n";
-	print "Chromatids with at least one nco and CO event: $countEventsOnSameChromatid\n";
+	print "Chromatids with at least one nco and CO event:  $countEventsOnSameChromatid\n";
 	print "Chromatids with a NCO event within 4Mb of a CO: $closeNCOs\n";
-	print "Average distance between NCO and CO event: $aveDistBetween\n";
+	print "Average distance between NCO and CO event:      $aveDistBetween\n";
 }
 
-
+# Done
